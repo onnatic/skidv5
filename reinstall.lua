@@ -1,7 +1,3 @@
-local folderToClean = "newvape"
-local folderToKeep = "profiles"
-local reinstallUrl = "https://raw.githubusercontent.com/onnation/onnation/main/NewMainScript.lua"
-
 local function deleteRecursive(path, keepPath)
     if path == keepPath then return end
     if isfolder and isfolder(path) then
@@ -16,22 +12,22 @@ local function deleteRecursive(path, keepPath)
     end
 end
 
-if not isfolder(folderToClean) then
-    print("folder '" .. folderToClean .. "' not found.")
+if not isfolder("newvape") then
+    print("folder 'newvape' not found.")
     return
 end
 
-local keepFullPath = folderToClean .. "/" .. folderToKeep
+local keepFullPath = "newvape/profiles"
 if not isfolder(keepFullPath) then
-    print("warning nigga: '" .. keepFullPath .. "' missing  - everything boutta get deleted gang")
+    print("warning nigga : 'newvape/profiles' missing - everything boutta get deleted gang")
 end
 
-for _, item in ipairs(listfiles(folderToClean)) do
+for _, item in ipairs(listfiles("newvape")) do
     if item ~= keepFullPath then
         deleteRecursive(item, keepFullPath)
     end
 end
 
-print("loading aerov4...")
-task.wait(1) --no no crash dabo
-loadstring(game:HttpGet(reinstallUrl, true))()
+print("loading skidv4...")
+task.wait(1)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/onnation/onnation/main/downloader.lua", true))()
