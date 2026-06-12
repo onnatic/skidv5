@@ -1,3 +1,4 @@
+--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.
 local run = function(func)
     local ok, err = pcall(func)
     if not ok then
@@ -21972,19 +21973,6 @@ run(function()
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
-end)
-
-run(function()
-    local CakeExploit = vape.Categories.Combat:CreateModule({
-        Name = 'CakeExploit',
-        Function = function(enabled)
-            if enabled then
-                game:GetService('ReplicatedStorage').rbxts_include.node_modules['@rbxts'].net.out._NetManaged.PlayerEatCake:FireServer({
-                    block = lplr
-                })
-            end
-        end
-    })
 end)
 
 run(function()
