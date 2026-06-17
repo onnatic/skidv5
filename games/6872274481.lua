@@ -8617,16 +8617,16 @@ run(function()
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
-	Network = PickupRange:CreateToggle({
-		Name = 'Network TP',
-		Default = true
-	})
 	PickupDelay = PickupRange:CreateSlider({
 		Name = 'Pickup Delay',
 		Min = 0,
 		Max = 500,
 		Default = 0,
 		Suffix = 'ms'
+	})
+	Network = PickupRange:CreateToggle({
+		Name = 'Network TP',
+		Default = true
 	})
 	Lower = PickupRange:CreateToggle({
 		Name = 'Feet Check'
@@ -21404,6 +21404,7 @@ run(function()
     ChatNameColor:CreateColorSlider({
         Name = 'Color',
         Function = function(h, s, v)
+			if not ChatNameColor.Enabled then return false end
             lplr:SetAttribute('ChatNameColor', Color3.fromHSV(h, s, v))
         end
     })
