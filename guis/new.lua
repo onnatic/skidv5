@@ -7065,12 +7065,11 @@ function mainapi:Load(skipgui, profile)
 		if success and result then
 			savedata = result
 		else
-			self:CreateNotification('Vape', 'Failed to load '..self.Profile..' profile. Creating a new one.', 10, 'alert')
+			self:CreateNotification('Vape', 'Failed to load '..self.Profile..' profile, using default settings so file may be corrupted.', 10, 'alert')
 			savecheck = false
-			self:Save()
 		end
 	else
-		self:CreateNotification('Vape', 'No profile found. Creating new profile for '..self.Profile, 8, 'info')
+		self:CreateNotification('Vape', 'no profile found so creating a new profile for '..self.Profile, 8, 'info')
 		self:Save()
 	end
 
@@ -7558,11 +7557,13 @@ mainapi:CreateCategory({
 	Icon = getcustomasset('newvape/assets/new/miniicon.png'),
 	Size = UDim2.fromOffset(19, 12)
 })
-mainapi:CreateCategory({
-	Name = 'Kits',
-	Icon = getcustomasset('newvape/assets/new/vape.png'),
-	Size = UDim2.fromOffset(20, 18)
-})
+if mainapi.Place == 2619619496 then
+    mainapi:CreateCategory({
+        Name = 'Kits',
+        Icon = getcustomasset('newvape/assets/new/vape.png'),
+        Size = UDim2.fromOffset(20, 18)
+    })
+end
 mainapi.Categories.Main:CreateDivider('misc')
 
 --[[
