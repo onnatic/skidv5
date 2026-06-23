@@ -84,7 +84,13 @@ run(function()
 			}
 		end,
 		HudAliveCount = require(lplr.PlayerScripts.TS.controllers.global['top-bar'].ui.game['hud-alive-player-counts']).HudAlivePlayerCounts,
-		ItemMeta = debug.getupvalue(require(replicatedStorage.TS.item['item-meta']).getItemMeta, 1),
+		ItemMeta = (function()
+			local ok, mod = pcall(require, replicatedStorage.TS.item['item-meta'])
+			if ok and mod and mod.getItemMeta then
+				return debug.getupvalue(mod.getItemMeta, 1) or {}
+			end
+			return {}
+		end)(),
 		Knit = Knit,
 		KnockbackUtil = require(replicatedStorage.TS.damage['knockback-util']).KnockbackUtil,
 		MageKitUtil = require(replicatedStorage.TS.games.bedwars.kit.kits.mage['mage-kit-util']).MageKitUtil,
@@ -98,7 +104,13 @@ run(function()
 		RuntimeLib = require(replicatedStorage['rbxts_include'].RuntimeLib),
 		SoundList = require(replicatedStorage.TS.sound['game-sound']).GameSound,
 		Store = require(lplr.PlayerScripts.TS.ui.store).ClientStore,
-		TeamUpgradeMeta = debug.getupvalue(require(replicatedStorage.TS.games.bedwars['team-upgrade']['team-upgrade-meta']).getTeamUpgradeMetaForQueue, 6),
+		TeamUpgradeMeta = (function()
+			local ok, mod = pcall(require, replicatedStorage.TS.games.bedwars['team-upgrade']['team-upgrade-meta'])
+			if ok and mod and mod.getTeamUpgradeMetaForQueue then
+				return debug.getupvalue(mod.getTeamUpgradeMetaForQueue, 6) or {}
+			end
+			return {}
+		end)(),
 		UILayers = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out).UILayers,
 		VisualizerUtils = require(lplr.PlayerScripts.TS.lib.visualizer['visualizer-utils']).VisualizerUtils,
 		WeldTable = require(replicatedStorage.TS.util['weld-util']).WeldUtil,
@@ -165,39 +177,89 @@ end)
 	
 run(function()
 	local AutoGamble
-	
+	local SpawnRemote = replicatedStorage:WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):WaitForChild("RewardCrate/SpawnRewardCrate")
+	local OpenRemote   = replicatedStorage:WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):WaitForChild("RewardCrate/OpenRewardCrate")
+	local selectedCrate = "diamond_lucky_crate" 
+	local altarId = 1 
+
 	AutoGamble = vape.Categories.Minigames:CreateModule({
 		Name = 'AutoGamble',
 		Function = function(callback)
 			if callback then
 				AutoGamble:Clean(bedwars.Client:GetNamespace('RewardCrate'):Get('CrateOpened'):Connect(function(data)
 					if data.openingPlayer == lplr then
-						local tab = bedwars.CrateItemMeta[data.reward.itemType] or {displayName = data.reward.itemType or 'unknown'}
+						local tab = bedwars.CrateItemMeta and bedwars.CrateItemMeta[data.reward.itemType] or {displayName = data.reward.itemType or 'unknown'}
 						notif('AutoGamble', 'Won '..tab.displayName, 5)
 					end
 				end))
-	
-				repeat
-					if not bedwars.CrateAltarController.activeCrates[1] then
-						for _, v in bedwars.Store:getState().Consumable.inventory do
-							if v.consumable:find('crate') then
-								bedwars.CrateAltarController:pickCrate(v.consumable, 1)
-								task.wait(1.2)
-								if bedwars.CrateAltarController.activeCrates[1] and bedwars.CrateAltarController.activeCrates[1][1] then
-									bedwars.Client:GetNamespace('RewardCrate'):Get('OpenRewardCrate'):SendToServer({
-										crateId = bedwars.CrateAltarController.activeCrates[1][1].attributes.crateId,
-										altarId = 1
-									})
+
+				task.spawn(function()
+					repeat
+						if not AutoGamble.Enabled then break end
+						local active = bedwars.CrateAltarController.activeCrates
+						local crateId = nil
+						if active then
+							for altar, data in pairs(active) do
+								if data and data[1] and data[1].attributes and data[1].attributes.crateId then
+									crateId = data[1].attributes.crateId
+									break
 								end
-								break
 							end
 						end
-					end
-					task.wait(1)
-				until not AutoGamble.Enabled
+
+						if crateId then
+							OpenRemote:FireServer({ crateId = crateId })
+							task.wait(2.5)
+						else
+							SpawnRemote:FireServer({
+								altarId = altarId,
+								crateType = selectedCrate,
+								useAltarUpgrade = false
+							})
+							task.wait(1.2) 
+						end
+
+						task.wait(0.5)
+					until not AutoGamble.Enabled
+				end)
 			end
 		end,
-		Tooltip = 'Automatically opens lucky crates, piston inspired!'
+		Tooltip = 'opens crates for u based off ur setting values'
+	})
+
+	AutoGamble:CreateDropdown({
+		Name = 'Crate Type',
+		List = {
+			'Diamond Lucky Crate',
+			'Gold Lucky Crate (level_up)',
+			'AFK Crate',
+			'Murder Crate',
+			'Kit Skin Crate'
+		},
+		Default = 'Diamond Lucky Crate',
+		Function = function(val)
+			local map = {
+				['Diamond Lucky Crate'] = 'diamond_lucky_crate',
+				['Gold Lucky Crate (level_up)'] = 'level_up_crate',
+				['AFK Crate'] = 'afk_crate',
+				['Murder Crate'] = 'murder_crate',
+				['Kit Skin Crate'] = 'kitskin_crate'
+			}
+			selectedCrate = map[val] or 'diamond_lucky_crate'
+		end
+	})
+
+	AutoGamble:CreateDropdown({
+		Name = 'Altar (0 or 1)',
+		List = {'Altar 0', 'Altar 1'},
+		Default = 'Altar 1',
+		Function = function(val)
+			if val == 'Altar 0' then
+				altarId = 0
+			else
+				altarId = 1
+			end
+		end
 	})
 end)
 	
